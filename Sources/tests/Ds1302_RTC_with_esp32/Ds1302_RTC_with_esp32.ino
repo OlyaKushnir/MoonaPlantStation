@@ -1,50 +1,18 @@
-#include <RTClib.h>
+#include "RTCManager.h"
 
-// Init rtc object
-//   DS1302 rtc;
-//   DS1302 rtc(ce_pin, sck_pin, io_pin);
-#define RTC_RST_PIN 2
-#define RTC_CLK_PIN 4
-#define RTC_DAT_PIN 5
-DS1302 rtc(RTC_RST_PIN, RTC_CLK_PIN, RTC_DAT_PIN);
-
-// buffer for DateTime.tostr
-char buf[20];
+RTCManager rtc;
 
 void setup() {
-  Serial.begin(9600);
-  rtc.begin();
+    Serial.begin(9600);
+    rtc.init(); 
 
-  if (!rtc.isrunning()) {
-    Serial.println("RTC is NOT running!");
-    // following line sets the RTC to the date & time this sketch was compiled
-    rtc.adjust(DateTime(__DATE__, __TIME__));
-  }
+    if (!rtc.isRTCActive()) {
+        Serial.println("RTC is NOT running!");
+    }
 }
 
 void loop() {
-  DateTime now = rtc.now();
-
-  Serial.println(now.tostr(buf));
-
-  Serial.print(" since midnight 1970/01/01 = ");
-  Serial.print(now.unixtime());
-  Serial.print("s = ");
-  Serial.print(now.unixtime() / 86400L);
-  Serial.println("d");
-
-  // calculate a date which is 7 days and 30 seconds into the future
-  DateTime future(now + (7 * 86400L + 30));
-
-  Serial.print(" now + 7d + 30s: ");
-  Serial.println(future.tostr(buf));
-
-  // calculate a date which is 30 days before
-  DateTime past(now - TimeDelta(30 * 86400L));
-
-  Serial.print(" now - 30d: ");
-  Serial.println(past.tostr(buf));
-
-  Serial.println();
+  DateTime now = rtc.getTime();
+  rtc.printTimeInfo();
   delay(3000);
 }
