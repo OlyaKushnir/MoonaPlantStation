@@ -1,0 +1,94 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include "DHT.h"
+#include <time.h>
+
+// Wi-Fi credentials
+const char* ssid = "kasemhub";
+const char* password = "kasemhub2022";
+
+// Twilio credentials
+const char* accountSID = "AC5796672ee8fc55c26898758ddb61405d"; // Replace with your Twilio Account SID
+const char* authToken = "CWDG8FBYP587AKZYVU2KVCX5";            // Replace with your Twilio Auth Token
+const char* twilioPhone = "+1234567890";                         // Replace with your Twilio Phone Number
+const char* recipientPhone = "+9720504854455";                   // Replace with your phone number
+
+// Twilio API URL
+const char* twilioAPI = "https://api.twilio.com/2010-04-01/Accounts/";
+
+// DHT sensor settings
+#define DHTPIN 4
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// NTP server settings
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 2 * 3600; // GMT+2
+const int daylightOffset_sec = 0;
+
+// Data variables
+float lastTemperature = NAN;
+float lastHumidity = NAN;
+String lastUpdateTime = "Never";
+
+void setup() {
+  Serial.begin(115200);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi connected!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+
+  dht.begin();
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  Serial.println("Time synchronization complete");
+}
+
+void loop() {
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  if (!isnan(temperature) && !isnan(humidity)) {
+    if (temperature > 30.0 || humidity > 80.0) { // Example condition for SMS alert
+      sendSMS(temperature, humidity);
+    }
+  } else {
+    Serial.println("Failed to read from DHT sensor!");
+  }
+  delay(60000); // Check every minute
+}
+
+void sendSMS(float temperature, float humidity) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String message = "Alert! Temp: " + String(temperature) + "C, Humidity: " + String(humidity) + "%";
+
+    String url = String(twilioAPI) + accountSID + "/Messages.json";
+    String auth = String(accountSID) + ":" + authToken;
+
+    http.begin(url);
+    http.setAuthorization(auth.c_str());
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    String payload = "To=" + String(recipientPhone) +
+                     "&From=" + String(twilioPhone) +
+                     "&Body=" + message;
+
+    int httpResponseCode = http.POST(payload);
+
+    if (httpResponseCode > 0) {
+      Serial.println("SMS sent successfully!");
+    } else {
+      Serial.print("Error sending SMS: ");
+      Serial.println(httpResponseCode);
+    }
+
+    http.end();
+  } else {
+    Serial.println("WiFi disconnected!");
+  }
+}
