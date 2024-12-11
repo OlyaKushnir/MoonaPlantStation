@@ -39,8 +39,8 @@ float lastHumidity = NAN;
 String lastUpdateTime = "Never";
 
 // Logging schedule
-int logHours[4] = {8, 12, 17, 2}; // Log at 08:00, 12:00, 17:00, 02:00
-bool loggedToday[4] = {false, false, false, false}; // Flags to track logging
+int logHours[4] = {8, 12, 17, 2};
+bool loggedToday[4] = {false, false, false, false};
 
 void logScheduledData() {
   struct tm timeinfo;
@@ -115,11 +115,10 @@ void handleSave() {
     }
     http.end();
 
-    // Send temporary feedback with delay
-    String html = "<html><head><title>Moona Plant Station</title>";
-    html += "<meta http-equiv='refresh' content='2;url=/'></head><body>";
+    String html = "<html><head><title>Moona Plant Station</title></head><body>";
     html += "<h1>Moona Plant Station</h1>";
     html += "<p style='color:green;'>" + responseMessage + "</p>";
+    html += "<a href='/'>Return to Main Page</a>";
     html += "</body></html>";
 
     server.send(200, "text/html", html);
@@ -129,26 +128,12 @@ void handleSave() {
 }
 
 void handleRoot() {
-  String html = "<html><head><title>Moona Plant Station</title>";
-  html += "<script>";
-  html += "function handleSubmit(event) {";
-  html += "  event.preventDefault();"; // Prevent form submission
-  html += "  const form = event.target;";
-  html += "  const info = form.info.value;";
-  html += "  fetch('/save', {";
-  html += "    method: 'POST',";
-  html += "    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },";
-  html += "    body: `info=${encodeURIComponent(info)}`";
-  html += "  }).then(response => response.text()).then(alert).catch(console.error);";
-  html += "  form.reset();"; // Reset form after submission
-  html += "}";
-  html += "</script>";
-  html += "</head><body>";
+  String html = "<html><head><title>Moona Plant Station</title></head><body>";
   html += "<h1>Moona Plant Station</h1>";
   html += "<p>Last Update: " + lastUpdateTime + "</p>";
   html += "<p>Temperature: " + (isnan(lastTemperature) ? "N/A" : String(lastTemperature) + " °C") + "</p>";
   html += "<p>Humidity: " + (isnan(lastHumidity) ? "N/A" : String(lastHumidity) + " %") + "</p>";
-  html += "<form onsubmit='handleSubmit(event)'>";
+  html += "<form action='/save' method='POST'>";
   html += "<label for='info'>Additional Info:</label>";
   html += "<input type='text' id='info' name='info' maxlength='100'><br><br>";
   html += "<input type='submit' value='Save Data'>";
@@ -156,6 +141,27 @@ void handleRoot() {
   html += "</body></html>";
 
   server.send(200, "text/html", html);
+}
+
+void sensorTask(void* parameter) {
+  while (true) {
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
+
+    if (!isnan(temperature) && !isnan(humidity)) {
+      lastTemperature = temperature;
+      lastHumidity = humidity;
+      lastUpdateTime = getCurrentTime();
+      Serial.println("Updated data:");
+      Serial.println("Temperature: " + String(lastTemperature) + " °C");
+      Serial.println("Humidity: " + String(lastHumidity) + " %");
+    } else {
+      Serial.println("Failed to read from DHT sensor!");
+    }
+
+    logScheduledData();
+    delay(120000); // Update every 2 minutes
+  }
 }
 
 void setup() {
@@ -171,91 +177,23 @@ void setup() {
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
-  // Initialize DHT sensor
   dht.begin();
 
   // Synchronize time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   Serial.println("Time synchronization complete");
 
-  // Initial reading from DHT sensor
-  lastTemperature = dht.readTemperature();
-  lastHumidity = dht.readHumidity();
-
-  if (!isnan(lastTemperature) && !isnan(lastHumidity)) {
-    lastUpdateTime = getCurrentTime();
-
-    // Log data for "web server restart"
-    String jsonPayload = "{\"date\":\"" + lastUpdateTime.substring(0, 10) +
-                         "\",\"time\":\"" + lastUpdateTime.substring(11, 19) +
-                         "\",\"temperature\":" + String(lastTemperature) +
-                         ",\"humidity\":" + String(lastHumidity) +
-                         ",\"info\":\"Web server restart\"}";
-
-    HTTPClient http;
-    http.begin(serverName);
-    http.addHeader("Content-Type", "application/json");
-    int httpResponseCode = http.POST(jsonPayload);
-    http.end();
-
-    if (httpResponseCode > 0) {
-      Serial.println("Web server restart data logged successfully.");
-    } else {
-      Serial.println("Error logging web server restart data!");
-    }
-
-    Serial.println("Initial data read:");
-    Serial.println("Temperature: " + String(lastTemperature) + " °C");
-    Serial.println("Humidity: " + String(lastHumidity) + " %");
-    Serial.println("Last Update Time: " + lastUpdateTime);
-  } else {
-    Serial.println("Failed to read from DHT sensor at startup!");
-    lastTemperature = 0.0; // Default value
-    lastHumidity = 0.0;    // Default value
-    lastUpdateTime = "Never";
-  }
-
-  // Start the web server
+  // Start the web server on Core 0
   server.on("/", handleRoot);
   server.on("/save", HTTP_POST, handleSave);
   server.begin();
   Serial.println("Web server started!");
+
+  // Start sensor task on Core 1
+  xTaskCreatePinnedToCore(sensorTask, "SensorTask", 10000, NULL, 1, NULL, 1);
 }
 
 void loop() {
-  static unsigned long lastUpdate = 0;
-  static bool firstLoop = true; // Prevent double logging on restart
-  unsigned long currentMillis = millis();
-
-  if (firstLoop) {
-    firstLoop = false;
-    return;
-  }
-
-  // Periodic update every 60 seconds
-  if (currentMillis - lastUpdate >= 60000) {
-    lastUpdate = currentMillis;
-
-    float temperature = dht.readTemperature();
-    float humidity = dht.readHumidity();
-
-    if (!isnan(temperature) && !isnan(humidity)) {
-      lastTemperature = temperature;
-      lastHumidity = humidity;
-      lastUpdateTime = getCurrentTime();
-      Serial.println("Updated data:");
-      Serial.println("Temperature: " + String(lastTemperature) + " °C");
-      Serial.println("Humidity: " + String(lastHumidity) + " %");
-      Serial.println("Last Update Time: " + lastUpdateTime);
-    } else {
-      Serial.println("Failed to read from DHT sensor!");
-    }
-  }
-
-  // Check for scheduled logging
-  logScheduledData();
-
-  // Handle client requests
   server.handleClient();
 }
 
