@@ -1,4 +1,5 @@
 /***************************************************
+Arduino Uno light/fan
  [ ] AREF
  [ ] GND
  [ ] ~D13/SCK
@@ -43,6 +44,56 @@ Fan → D11
 
 
 
+****************************************************/
+/**********************************
+Arduino Uno watering/drain (Steppers)
+ [ ] AREF
+ [ ] GND
+ [ ] ~D13/SCK
+ [ ] D12/MISO         
+ [ ] ~D11/MOSI       
+ [ ] ~D10/SS        
+ [ ] ~D9       
+ [ ] D8                  
+ [ ] D7                   
+ [X] ~D6             --> A4988 DIR (Direction Pin)                             
+ [ ] ~D5                                  
+ [ ] D4                                      
+ [X] ~D3             --> A4988 STEP (Step Pin)                                
+ [ ] D2                                  
+ [ ] D1 TX                                  
+ [ ] D0 RX  
+
+ [ ] RESET
+ [ ] 3.3V
+ [ ] 5V
+ [ ] GND
+ [ ] VIN
+
+ [ ] A0
+ [ ] A1
+ [ ] A2
+ [ ] A3
+ [ ] A4
+ [ ] A5
+
+Pin Assignments:
+A4988 Stepper Driver:
+DIR (Direction Pin) → D6
+STEP (Step Pin) → D3
+ENABLE (optional) → Not Connected
+***************************************************/
+/*********
+ ESP32 DEVKIT V1
+
+ DHT11 
+ "+"   - 3.3V
+ "out" - GPIO4 (D4)
+ "-"   - GND
+**********************
+
+
+ 
 Devices list and pin count:
 1-3   Timer
 4     Relay Fans
@@ -61,10 +112,6 @@ Devices list and pin count:
 21    Water level Sensor Drain
 22    Relay Drain pump
 23    Temperature/Humidity Sensor 
-
-Optinal on ESP32
-
-
-****************************************************/
+*********/
 
 
