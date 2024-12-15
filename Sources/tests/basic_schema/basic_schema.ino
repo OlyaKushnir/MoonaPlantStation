@@ -2,15 +2,15 @@
 Arduino Uno light/fan
  [ ] AREF
  [ ] GND
- [ ] ~D13/SCK
- [ ] D12/MISO         
+ [?] ~D13/SCK         --> free Relay3 220V  
+ [?] D12/MISO         --> free Relay4 220V 
  [X] ~D11/MOSI       --> Fan Relay                      
  [X] ~D10/SS         --> Light Relay   
  [ ] ~D9       
  [ ] D8                  
  [ ] D7                   
  [ ] ~D6                             
- [ ] ~D5             --> RTC CLK/SCLK                       
+ [X] ~D5             --> RTC CLK/SCLK                       
  [X] D4              --> RTC DAT/IO                      
  [ ] ~D3                                
  [X] D2              --> RTC RST/CE
@@ -42,7 +42,8 @@ Relays:
 Light → D10
 Fan → D11
 
-
+Arduino Uno A4 (SDA) → ESP32 GPIO21 (SDA)
+Arduino Uno A5 (SCL) → ESP32 GPIO22 (SCL)
 
 ****************************************************/
 /**********************************

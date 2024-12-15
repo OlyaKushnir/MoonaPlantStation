@@ -7,6 +7,9 @@
 
 #include <RtcDS1302.h>
 
+#include <Wire.h>
+#define I2C_ADDRESS 0x08 // Unique address for this Arduino as an I2C slave
+
 ThreeWire myWire(4, 5, 2); // IO, SCLK, CE
 RtcDS1302<ThreeWire> Rtc(myWire);
 
@@ -44,6 +47,10 @@ void setFan_OFF() {
 }
 
 void setup() {
+  Wire.begin(I2C_ADDRESS); // Initialize in slave mode
+  Wire.onRequest(sendData); // Set handler for requests from the master
+  //Wire.onReceive(receiveData); // Set handler for receiving data from the master
+
   setupLight();
   setupFan();
 
@@ -125,7 +132,7 @@ void loop() {
       Serial.println("Fan turned ON (daytime)");
     }
   }
-
+  
   delay(1000); // Wait for 1 second before the next iteration
 }
 
@@ -144,4 +151,16 @@ void printDateTime(const RtcDateTime& dt) {
              dt.Minute(),
              dt.Second());
   Serial.print(datestring);
+}
+
+
+// Function to send the light and fan states to the master
+void sendData() {
+  // Convert boolean states to bytes (1 for ON, 0 for OFF)
+  uint8_t lightStateByte = currLightState ? 1 : 0;
+  uint8_t fanStateByte = fanState ? 1 : 0;
+
+  // Send light and fan states over I2C
+  Wire.write(lightStateByte); // Send light state
+  Wire.write(fanStateByte);   // Send fan state
 }
