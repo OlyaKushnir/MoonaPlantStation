@@ -12,7 +12,7 @@
 
 // Sensor and pump pins
 #define SENSOR_PIN A0  // Pin to read sensor data
-#define PUMP_PIN 6     // Pin to control the Pump
+#define PUMP_PIN 9     // Pin to control the Pump
 
 int waterLevel = 0; // Variable to store water level reading
 
