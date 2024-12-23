@@ -29,3 +29,5 @@ function doPost(e) {
     return ContentService.createTextOutput("Error: " + error.message).setMimeType(ContentService.MimeType.TEXT);
   }
 }
+
+https://script.google.com/macros/s/AKfycbwUPpUD0MZnVYKX5UfAxPlHENqLO3BJlXarhV_xGt1T1yyESkxU2vaypASxG8jPDnkAXQ/exec
