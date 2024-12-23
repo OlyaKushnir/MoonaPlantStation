@@ -5,6 +5,9 @@
  "+"   - 3.3V
  "out" - GPIO4 (D4)
  "-"   - GND
+
+spread to save data
+ https://docs.google.com/spreadsheets/d/11BM6zISfXGBiXFoD9Yh5ccelSOZp2upkFRFkpzuvpno
 *********/
 
 #include "DHT.h"
