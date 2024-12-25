@@ -48,6 +48,20 @@ public:
     void setupWebHandlers() {
         server->on("/", [this]() { handleRoot(); });
         server->on("/save", HTTP_POST, [this]() { handleSave(); });
+        server->on("/start_irrigation", [this]() { handleStartIrrigation(); }); // Route for irrigation
+        server->on("/start_fertilization", [this]() { handleStartFertilization(); }); // Route for fertilization
+
+    }
+
+
+    void handleStartIrrigation() {
+        Serial.println("START_IRRIGATION"); // Send irrigation command to Arduino
+        server->send(200, "text/plain", "Irrigation started!"); // Response for debugging
+    }
+
+    void handleStartFertilization() {
+        Serial.println("START_FERTILIZATION"); // Send fertilization command to Arduino
+        server->send(200, "text/plain", "Fertilization started!"); // Response for debugging
     }
 
     void handleRoot() {
