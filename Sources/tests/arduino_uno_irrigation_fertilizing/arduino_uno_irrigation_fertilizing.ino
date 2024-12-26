@@ -1,7 +1,7 @@
 
 /// Pumps
-#define SINGLE_PUMP_PULSES 33333 //3333 //pulses count for a specific measured pumping
-#define PUMP_SPEED 50 //delay between pulse up and down
+const int SINGLE_PUMP_PULSES = 33333; //3333 //pulses count for a specific measured pumping
+const int PUMP_SPEED = 50; //delay between pulse up and down
 bool eng1dir = false;
 bool eng2dir = false;
 
