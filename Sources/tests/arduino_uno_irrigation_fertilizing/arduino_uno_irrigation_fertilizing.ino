@@ -1,10 +1,4 @@
 
-#include <RtcDS1302.h>
-#include <Wire.h>
-
-#define I2C_ADDRESS 0x08  // I2C address for start command
-//#define PIN_VALVE_IRRIGATION 7    // Pin for irrigation valve 7
-
 #define VALVE_1_PIN 9
 #define SPLIT_VALVE_1_PIN 11
 #define VALVE_2_PIN 10
