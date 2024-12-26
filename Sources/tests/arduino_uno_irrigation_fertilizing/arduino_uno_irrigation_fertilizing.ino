@@ -1,10 +1,55 @@
 
+/// Pumps
+#define SINGLE_PUMP_PULSES 33333 //3333 //pulses count for a specific measured pumping
+#define PUMP_SPEED 50 //delay between pulse up and down
+bool eng1dir = false;
+bool eng2dir = false;
+
+// pins for pulse engines
+#define ENG_1_DIR_PIN 13    // Direction Pin
+#define ENG_1_STEP_PIN 6   // Step Pin
+#define ENG_2_DIR_PIN 8   // Direction Pin
+#define ENG_2_STEP_PIN 3   // Step Pin
+#define ENG_ENABLE_ALL_PIN 4 // Enable Pin
+
+void CMD_MOVE_PUMP_1() { movePump(ENG_1_STEP_PIN, SINGLE_PUMP_PULSES, PUMP_SPEED);}
+void CMD_MOVE_PUMP_2() { movePump(ENG_2_STEP_PIN, SINGLE_PUMP_PULSES, PUMP_SPEED);}
+
+#define CMD_CHAR_MOVE_PUMP_1 'q'
+#define CMD_CHAR_MOVE_PUMP_2 'w'
+
+void movePump(int pin, int pulseCount, int pulseDelay) {
+  // Generate steps
+  for (int i = 0; i < pulseCount; i++) {
+    digitalWrite(pin, HIGH);   // Send a pulse
+    delayMicroseconds(pulseDelay);        // Adjust speed
+    digitalWrite(pin, LOW);    // End pulse
+    delayMicroseconds(pulseDelay);        // Adjust speed
+  }
+}
+void initPumps() {
+  // Initialize engine pins as outputs
+  pinMode(ENG_1_DIR_PIN, OUTPUT);
+  pinMode(ENG_1_STEP_PIN, OUTPUT);
+  pinMode(ENG_2_DIR_PIN, OUTPUT);
+  pinMode(ENG_2_STEP_PIN, OUTPUT);
+  pinMode(ENG_ENABLE_ALL_PIN, OUTPUT);
+  // set engine initial state
+  digitalWrite(ENG_ENABLE_ALL_PIN, HIGH); //enables all engines
+  digitalWrite(ENG_1_DIR_PIN, LOW);  // Rotate eng1 clockwise
+  digitalWrite(ENG_2_DIR_PIN, LOW);  // Rotate eng2 clockwise
+}
+/// Pumps
+
+
+/// Values
+
+// pins for value system
 #define VALVE_1_PIN 9
 #define SPLIT_VALVE_1_PIN 11
 #define VALVE_2_PIN 10
 #define SPLIT_VALVE_2_PIN 12
 #define FEEDER_VALVE_PIN 7
-
 
 #define CMD_OPEN_VALUE_1() (setDigitalOutputPin(VALVE_1_PIN))
 #define CMD_CLOSE_VALUE_1() (resetDigitalOutputPin(VALVE_1_PIN))
@@ -29,8 +74,6 @@
 #define CMD_CHAR_CLOSE_FEEDER_VALVE 'b'
 #define CMD_PRINT_COMMANDS_INFO 'i'
 
-
-
 void initDigitalOutputPin(int pin) {
   pinMode(pin, OUTPUT);
 }
@@ -41,15 +84,21 @@ void resetDigitalOutputPin(int pin) {
   digitalWrite(pin, LOW);
 }
 
-void setup() {
-  Serial.begin(9600);
-
-  // Initialize the pins as OUTPUT
+void initValues() {
+  // Initialize vales pins
   initDigitalOutputPin(VALVE_1_PIN);
   initDigitalOutputPin(SPLIT_VALVE_1_PIN);
   initDigitalOutputPin(VALVE_2_PIN);
   initDigitalOutputPin(SPLIT_VALVE_2_PIN);
   initDigitalOutputPin(FEEDER_VALVE_PIN);
+}
+/// Values
+
+void setup() {
+  Serial.begin(9600);
+
+  initValues();
+  initPumps();
 
 }
 
@@ -65,6 +114,8 @@ void loop() {
     Serial.println("Recieved command: " + String(command));
 
   switch (command) {
+
+    // values
     case CMD_CHAR_OPEN_VALUE_1:
       CMD_OPEN_VALUE_1();
       break;
@@ -95,9 +146,20 @@ void loop() {
     case CMD_CHAR_CLOSE_FEEDER_VALVE:
       CMD_CLOSE_FEEDER_VALVE();
       break;
+    
+    //pumps
+    case CMD_CHAR_MOVE_PUMP_1:
+      CMD_MOVE_PUMP_1();
+      break;
+    case CMD_CHAR_MOVE_PUMP_2:
+      CMD_MOVE_PUMP_2();
+      break;
+    
+    //misc
     case CMD_PRINT_COMMANDS_INFO: 
       printCommandsInfo();
       break;
+    
     default:
       break;
   }
