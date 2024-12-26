@@ -51,12 +51,6 @@ void setup() {
   initDigitalOutputPin(SPLIT_VALVE_2_PIN);
   initDigitalOutputPin(FEEDER_VALVE_PIN);
 
-  // setDigitalOutputPin(SPLIT_VALVE_2_PIN);
-  // setDigitalOutputPin(SPLIT_VALVE_1_PIN);
-  // testPin(VALVE_1_PIN);
-  // testPin(VALVE_2_PIN);
-
-  // testPin(FEEDER_VALVE_PIN);
 }
 
 
