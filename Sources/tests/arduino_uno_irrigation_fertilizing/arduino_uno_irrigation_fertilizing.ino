@@ -35,7 +35,6 @@
 #define CMD_CHAR_CLOSE_FEEDER_VALVE 'b'
 #define CMD_PRINT_COMMANDS_INFO 'i'
 
-#define FEEDER_TIME 30000  // 30 second
 
 
 void initDigitalOutputPin(int pin) {
