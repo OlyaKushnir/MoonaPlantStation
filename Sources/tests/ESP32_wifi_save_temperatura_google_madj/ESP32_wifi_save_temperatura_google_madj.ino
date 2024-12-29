@@ -19,7 +19,7 @@ const char* ssid = "kasemhub";
 const char* password = "kasemhub2022";
 
 // Google Sheets Webhook URL
-const char* serverName = "https://script.google.com/macros/s/AKfycbwUPpUD0MZnVYKX5UfAxPlHENqLO3BJlXarhV_xGt1T1yyESkxU2vaypASxG8jPDnkAXQ/exec";
+const char* serverName = "https://script.google.com/macros/s/AKfycbwJffoT8peRyFgqzu0KZUfElxaVflM6zvZ0AIp50wMFgfkz8n5x-BKCI7U9vIjk1bhs/exec";
 
 // DHT sensor settings
 #define DHTPIN 4

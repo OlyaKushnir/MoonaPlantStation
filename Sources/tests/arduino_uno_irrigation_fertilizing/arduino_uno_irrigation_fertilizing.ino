@@ -45,7 +45,7 @@ void initPumps() {
 /// Values
 
 // pins for value system
-#define VALVE_1_PIN 9
+#define VALVE_1_PIN 9 
 #define SPLIT_VALVE_1_PIN 11
 #define VALVE_2_PIN 10
 #define SPLIT_VALVE_2_PIN 12
@@ -62,17 +62,20 @@ void initPumps() {
 #define CMD_OPEN_FEEDER_VALVE() (setDigitalOutputPin(FEEDER_VALVE_PIN))
 #define CMD_CLOSE_FEEDER_VALVE() (resetDigitalOutputPin(FEEDER_VALVE_PIN))
 
-#define CMD_CHAR_OPEN_VALUE_1 'a'
-#define CMD_CHAR_CLOSE_VALUE_1 'z'
-#define CMD_CHAR_LEFT_SPLIT_VALUE_1 's'
-#define CMD_CHAR_RIGHT_SPLIT_VALUE_1 'x'
-#define CMD_CHAR_OPEN_VALUE_2 'd'
-#define CMD_CHAR_CLOSE_VALUE_2 'c'
-#define CMD_CHAR_LEFT_SPLIT_VALUE_2 'f'
-#define CMD_CHAR_RIGHT_SPLIT_VALUE_2 'v'
-#define CMD_CHAR_OPEN_FEEDER_VALVE 'g'
-#define CMD_CHAR_CLOSE_FEEDER_VALVE 'b'
+#define CMD_CHAR_OPEN_VALUE_1 'a'               //valve1 close steper1 vavle (Fertilizer1)
+#define CMD_CHAR_CLOSE_VALUE_1 'z'              //valve1 open steper1 vavle (Fertilizer1)
+#define CMD_CHAR_LEFT_SPLIT_VALUE_1 's'         //valve3 close steper2 vavle (Fertilizer2)
+#define CMD_CHAR_RIGHT_SPLIT_VALUE_1 'x'        //valve3 open steper2 vavle (Fertilizer2) 
+#define CMD_CHAR_OPEN_VALUE_2 'd'               //valve2 back Fertilizer1 to Fertilizer tank1 
+#define CMD_CHAR_CLOSE_VALUE_2 'c'              //valve2 back Fertilizer1 to Watter tank 
+#define CMD_CHAR_LEFT_SPLIT_VALUE_2 'f'         //valve4 back Fertilizer2 to Fertilizer tank2 
+#define CMD_CHAR_RIGHT_SPLIT_VALUE_2 'v'        //valve4 back Fertilizer2 to Watter tank 
+#define CMD_CHAR_OPEN_FEEDER_VALVE 'g'          //valve5 close watter to the plants
+#define CMD_CHAR_CLOSE_FEEDER_VALVE 'b'         //valve5 release watter tank to the plants
 #define CMD_PRINT_COMMANDS_INFO 'i'
+
+const int valvePins[] = {VALVE_1_PIN, SPLIT_VALVE_1_PIN, VALVE_2_PIN, SPLIT_VALVE_2_PIN};
+const int numValves = sizeof(valvePins) / sizeof(valvePins[0]);
 
 void initDigitalOutputPin(int pin) {
   pinMode(pin, OUTPUT);
@@ -99,6 +102,7 @@ void setup() {
 
   initValues();
   initPumps();
+  openTwoValvesReturnFertilizer();
 
 }
 
@@ -166,14 +170,33 @@ void loop() {
 }
 
 void printCommandsInfo() {
-  Serial.println("CMD_CHAR_OPEN_VALUE_1: " + String('a'));
-  Serial.println("CMD_CHAR_CLOSE_VALUE_1: " + String('z'));
-  Serial.println("CMD_CHAR_LEFT_SPLIT_VALUE_1: " + String('s'));
-  Serial.println("CMD_CHAR_RIGHT_SPLIT_VALUE_1: " + String('x'));
-  Serial.println("CMD_CHAR_OPEN_VALUE_2: " + String('d'));
-  Serial.println("CMD_CHAR_CLOSE_VALUE_2: " + String('c'));
-  Serial.println("CMD_CHAR_LEFT_SPLIT_VALUE_2: " + String('f'));
-  Serial.println("CMD_CHAR_RIGHT_SPLIT_VALUE_2: " + String('v'));
-  Serial.println("CMD_CHAR_OPEN_FEEDER_VALVE: " + String('g'));
-  Serial.println("CMD_CHAR_CLOSE_FEEDER_VALVE: " + String('b'));
+  Serial.println("valve1 close steper1 vavle (Fertilizer1)" + String('a'));
+  Serial.println("valve1 open steper1 vavle (Fertilizer1)" + String('z'));
+  Serial.println("valve3 close steper2 vavle (Fertilizer2)" + String('s'));
+  Serial.println("valve3 open steper2 vavle (Fertilizer2) " + String('x'));
+  Serial.println("valve2 back Fertilizer1 to Fertilizer tank1 " + String('d'));
+  Serial.println("valve2 back Fertilizer1 to Watter tank " + String('c'));
+  Serial.println("valve4 back Fertilizer2 to Fertilizer tank2 " + String('f'));
+  Serial.println("valve4 back Fertilizer2 to Watter tank " + String('v'));
+  Serial.println("valve5 close watter to the plants" + String('g'));
+  Serial.println("valve5 release watter tank to the plants" + String('b'));
+}
+
+// Function to open all valves except the 5th feeder
+void openValvesExcept5th() {
+  for (int i = 0; i < numValves; i++) {
+    if (i == 4) { // Skip 5th feeder (index 4)
+      digitalWrite(valvePins[i], LOW); // Ensure the 5th valve stays closed
+    } else {
+      digitalWrite(valvePins[i], HIGH); // Open the other valves
+    }
+  }
+}
+
+// Function to open only VALVE_1_PIN and SPLIT_VALVE_1_PIN
+void openTwoValvesReturnFertilizer() {
+  digitalWrite(VALVE_1_PIN, LOW); // Open valve 1
+  digitalWrite(SPLIT_VALVE_1_PIN, LOW); // Open split valve 1
+  digitalWrite(VALVE_2_PIN, HIGH); // Ensure valve 2 is closed
+  digitalWrite(SPLIT_VALVE_2_PIN, HIGH); // Ensure split valve 2 is closed
 }
