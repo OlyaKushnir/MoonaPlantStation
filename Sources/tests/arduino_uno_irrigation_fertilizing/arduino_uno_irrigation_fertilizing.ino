@@ -1,3 +1,6 @@
+bool dir = false;
+int speed = 25;
+int pulses =1400;
 
 /// Pumps
 const int SINGLE_PUMP_PULSES = 33333; //3333 //pulses count for a specific measured pumping
@@ -11,6 +14,14 @@ bool eng2dir = false;
 #define ENG_2_DIR_PIN 8   // Direction Pin
 #define ENG_2_STEP_PIN 3   // Step Pin
 #define ENG_ENABLE_ALL_PIN 4 // Enable Pin
+
+// pins for pulse engine
+#define DIR_PIN 2    // Direction Pin   1=yellow
+#define STEP_PIN 3   // Step Pin
+#define ENABLE_PIN 4 // Enable Pin (optional)
+
+#define DIR2_PIN 5    // Direction Pin   2=yellow
+#define STEP2_PIN 6   // Step Pin
 
 void CMD_MOVE_PUMP_1() { movePump(ENG_1_STEP_PIN, SINGLE_PUMP_PULSES, PUMP_SPEED);}
 void CMD_MOVE_PUMP_2() { movePump(ENG_2_STEP_PIN, SINGLE_PUMP_PULSES, PUMP_SPEED);}
@@ -104,6 +115,21 @@ void setup() {
   initPumps();
   openTwoValvesReturnFertilizer();
 
+  
+    // Set pins as outputs
+  pinMode(DIR_PIN, OUTPUT);
+  pinMode(STEP_PIN, OUTPUT);
+  pinMode(DIR2_PIN, OUTPUT);
+  pinMode(STEP2_PIN, OUTPUT);
+  pinMode(ENABLE_PIN, OUTPUT);
+  
+  // Optionally enable the driver
+  digitalWrite(ENABLE_PIN, LOW);  // Enable driver (LOW or HIGH based on your driver)
+
+  // Set initial direction (HIGH or LOW)
+  digitalWrite(DIR_PIN, LOW);  // Rotate clockwise
+  digitalWrite(DIR2_PIN, LOW);  // Rotate clockwise
+
 }
 
 
@@ -163,6 +189,20 @@ void loop() {
     case CMD_PRINT_COMMANDS_INFO: 
       printCommandsInfo();
       break;
+
+    case 113:  // command = 'q' - single pulse series
+      movePump(pulses, speed); 
+      movePump2(pulses, speed);
+      break;
+    case 119: // command = 'w' - start/stop continous
+      continousPumpEnabled = !continousPumpEnabled;
+      break;
+    case 101: // command = 'e' - flip direction
+      dir = !dir;
+      (dir ? digitalWrite(DIR_PIN, HIGH) : digitalWrite(DIR_PIN, LOW));
+      (dir ? digitalWrite(DIR2_PIN, HIGH) : digitalWrite(DIR2_PIN, LOW));
+      break;
+
     
     default:
       break;
@@ -199,4 +239,25 @@ void openTwoValvesReturnFertilizer() {
   digitalWrite(SPLIT_VALVE_1_PIN, LOW); // Open split valve 1
   digitalWrite(VALVE_2_PIN, HIGH); // Ensure valve 2 is closed
   digitalWrite(SPLIT_VALVE_2_PIN, HIGH); // Ensure split valve 2 is closed
+}
+
+
+void movePump(int pulseCount, int pulseDelay) {
+  // Generate steps
+  for (int i = 0; i < pulseCount; i++) {
+    digitalWrite(STEP_PIN, HIGH);   // Send a pulse
+    delayMicroseconds(pulseDelay);        // Adjust speed
+     digitalWrite(STEP_PIN, LOW);    // End pulse
+    delayMicroseconds(pulseDelay);        // Adjust speed
+  }
+}
+
+void movePump2(int pulseCount, int pulseDelay) {
+  // Generate steps
+  for (int i = 0; i < pulseCount; i++) {
+    digitalWrite(STEP2_PIN, HIGH);   // Send a pulse
+    delayMicroseconds(pulseDelay);        // Adjust speed
+     digitalWrite(STEP2_PIN, LOW);    // End pulse
+    delayMicroseconds(pulseDelay);        // Adjust speed
+  }
 }
