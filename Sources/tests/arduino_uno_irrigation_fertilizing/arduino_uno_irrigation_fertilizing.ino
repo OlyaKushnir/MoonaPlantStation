@@ -1,6 +1,13 @@
 bool dir = false;
-int speed = 25;
-int pulses =1400;
+int speed = 50;
+int pulses = 3333;
+int pulses_value = 3333;
+
+// Constants for delays
+const int PRIME_DELAY = 10000; // Delay for priming system in milliseconds
+const int FERTILIZE_DELAY = 10000; // Delay for fertilizing in milliseconds
+const int FLUSH_DELAY = 10000; // Delay for flushing system in milliseconds
+
 
 /// Pumps
 const int SINGLE_PUMP_PULSES = 33333; //3333 //pulses count for a specific measured pumping
@@ -106,6 +113,15 @@ void initValues() {
   initDigitalOutputPin(SPLIT_VALVE_2_PIN);
   initDigitalOutputPin(FEEDER_VALVE_PIN);
 }
+
+void closeValves() {
+  // Initialize vales pins
+  resetDigitalOutputPin(VALVE_1_PIN);
+  resetDigitalOutputPin(SPLIT_VALVE_1_PIN);
+  resetDigitalOutputPin(VALVE_2_PIN);
+  resetDigitalOutputPin(SPLIT_VALVE_2_PIN);
+  resetDigitalOutputPin(FEEDER_VALVE_PIN);
+}
 /// Values
 
 void setup() {
@@ -113,28 +129,14 @@ void setup() {
 
   initValues();
   initPumps();
-  openTwoValvesReturnFertilizer();
+  initializeMotors();
 
-  
-    // Set pins as outputs
-  pinMode(DIR_PIN, OUTPUT);
-  pinMode(STEP_PIN, OUTPUT);
-  pinMode(DIR2_PIN, OUTPUT);
-  pinMode(STEP2_PIN, OUTPUT);
-  pinMode(ENABLE_PIN, OUTPUT);
-  
-  // Optionally enable the driver
-  digitalWrite(ENABLE_PIN, LOW);  // Enable driver (LOW or HIGH based on your driver)
-
-  // Set initial direction (HIGH or LOW)
-  digitalWrite(DIR_PIN, LOW);  // Rotate clockwise
-  digitalWrite(DIR2_PIN, LOW);  // Rotate clockwise
+  openTwoValvesReturnFertilizer(); 
 
 }
 
 
 void loop() {
-
   int command = Serial.read();
   if (command == -1)  // return if no command or new line
   {
@@ -177,25 +179,25 @@ void loop() {
       CMD_CLOSE_FEEDER_VALVE();
       break;
     
-    //pumps
-    case CMD_CHAR_MOVE_PUMP_1:
-      CMD_MOVE_PUMP_1();
-      break;
-    case CMD_CHAR_MOVE_PUMP_2:
-      CMD_MOVE_PUMP_2();
-      break;
+    // //pumps
+    // case CMD_CHAR_MOVE_PUMP_1:
+    //   CMD_MOVE_PUMP_1();
+    //   break;
+    // case CMD_CHAR_MOVE_PUMP_2:
+    //   CMD_MOVE_PUMP_2();
+    //   break;
     
     //misc
     case CMD_PRINT_COMMANDS_INFO: 
       printCommandsInfo();
       break;
 
-    case 113:  // command = 'q' - single pulse series
+    case CMD_CHAR_MOVE_PUMP_1:  // command = 'q' - single pulse series
       movePump(pulses, speed); 
       movePump2(pulses, speed);
       break;
     case 119: // command = 'w' - start/stop continous
-      continousPumpEnabled = !continousPumpEnabled;
+      stopMotors();
       break;
     case 101: // command = 'e' - flip direction
       dir = !dir;
@@ -203,6 +205,27 @@ void loop() {
       (dir ? digitalWrite(DIR2_PIN, HIGH) : digitalWrite(DIR2_PIN, LOW));
       break;
 
+    case 49:  //press '1'
+        Serial.println("Starting priming phase...");
+        openTwoValvesReturnFertilizer();
+        movePump(pulses, speed); 
+        movePump2(pulses, speed);
+        delay(PRIME_DELAY);
+
+        Serial.println("Starting fertilization phase...");
+        fertilizeSystem(); //swich fertilezer to watter tank 
+        movePump(pulses_value, speed); 
+        movePump2(pulses_value, speed);
+        stopMotors();
+        delay(FERTILIZE_DELAY);
+
+        Serial.println("Starting flushing phase...");
+        setDigitalOutputPin(FEEDER_VALVE_PIN);
+        delay(FLUSH_DELAY);
+
+        Serial.println("Process completed.");
+        closeValves(); // Reset all valves to closed state
+        break;
     
     default:
       break;
@@ -241,6 +264,13 @@ void openTwoValvesReturnFertilizer() {
   digitalWrite(SPLIT_VALVE_2_PIN, HIGH); // Ensure split valve 2 is closed
 }
 
+// Function to open only VALVE_2_PIN and SPLIT_VALVE_2_PIN for fertilization
+void fertilizeSystem() {
+  digitalWrite(VALVE_1_PIN, HIGH); // Close valve 1
+  digitalWrite(SPLIT_VALVE_1_PIN, HIGH); // Close split valve 1
+  digitalWrite(VALVE_2_PIN, HIGH); // Open valve 2
+  digitalWrite(SPLIT_VALVE_2_PIN, HIGH); // Open split valve 2
+}
 
 void movePump(int pulseCount, int pulseDelay) {
   // Generate steps
@@ -257,7 +287,33 @@ void movePump2(int pulseCount, int pulseDelay) {
   for (int i = 0; i < pulseCount; i++) {
     digitalWrite(STEP2_PIN, HIGH);   // Send a pulse
     delayMicroseconds(pulseDelay);        // Adjust speed
-     digitalWrite(STEP2_PIN, LOW);    // End pulse
+    digitalWrite(STEP2_PIN, LOW);    // End pulse
     delayMicroseconds(pulseDelay);        // Adjust speed
   }
+}
+
+// Function to initialize motor pins
+void initializeMotors() {
+  pinMode(DIR_PIN, OUTPUT);
+  pinMode(STEP_PIN, OUTPUT);
+  pinMode(DIR2_PIN, OUTPUT);
+  pinMode(STEP2_PIN, OUTPUT);
+  pinMode(ENABLE_PIN, OUTPUT);
+
+  // Optionally enable the driver
+  digitalWrite(ENABLE_PIN, LOW);  // Enable driver (LOW or HIGH based on your driver)
+
+  // Set initial direction (HIGH or LOW)
+  digitalWrite(DIR_PIN, LOW);  // Rotate clockwise
+  digitalWrite(DIR2_PIN, LOW);  // Rotate clockwise
+}
+
+// Function to stop motors
+void stopMotors() {
+  // Optionally enable the driver
+  digitalWrite(ENABLE_PIN, HIGH);  // Enable driver (LOW or HIGH based on your driver)
+
+  // Set initial direction (HIGH or LOW)
+  digitalWrite(DIR_PIN, LOW);  // Rotate clockwise
+  digitalWrite(DIR2_PIN, LOW);  // Rotate clockwise
 }
